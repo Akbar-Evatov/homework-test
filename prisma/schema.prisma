@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  students    Student[]
+  assignments TestAssignment[]
+}
+
+model Student {
+  id          Int      @id @default(autoincrement())
+  studentCode String   @unique
+  name        String
+  createdAt   DateTime @default(now())
+
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  attempts Attempt[]
+
+  @@index([classId])
+}
+
+model Test {
+  id                   String   @id @default(cuid())
+  title                String
+  showScoreImmediately Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  questions   Question[]
+  assignments TestAssignment[]
+  attempts    Attempt[]
+}
+
+model Question {
+  id       String  @id @default(cuid())
+  text     String
+  order    Int
+  imageUrl String?
+
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  choices Choice[]
+
+  @@index([testId])
+}
+
+model Choice {
+  id        String  @id @default(cuid())
+  text      String
+  order     Int
+  isCorrect Boolean @default(false)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model TestAssignment {
+  id String @id @default(cuid())
+
+  testId  String
+  test    Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, classId])
+}
+
+model Attempt {
+  id            String   @id @default(cuid())
+  answers       Json
+  score         Int
+  totalQuestions Int
+  submittedAt   DateTime @default(now())
+
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  testId    String
+  test      Test    @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, testId])
+}

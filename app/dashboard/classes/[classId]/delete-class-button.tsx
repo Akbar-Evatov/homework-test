@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { t } from "@/lib/i18n";
+import Button from "@/components/ui/Button";
+import { TrashIcon, AlertCircleIcon } from "@/components/ui/Icons";
 
 export default function DeleteClassButton({ classId }: { classId: string }) {
   const router = useRouter();
@@ -14,7 +16,7 @@ export default function DeleteClassButton({ classId }: { classId: string }) {
     try {
       const res = await fetch(`/api/classes/${classId}`, { method: "DELETE" });
       if (res.ok) {
-        router.push("/dashboard");
+        router.push("/dashboard/classes");
         router.refresh();
       }
     } finally {
@@ -24,32 +26,44 @@ export default function DeleteClassButton({ classId }: { classId: string }) {
 
   if (confirming) {
     return (
-      <div className="flex items-center gap-2 text-sm">
-        <span>{t("classes.deleteClassConfirm")}</span>
-        <button
-          onClick={handleDelete}
-          disabled={pending}
-          className="font-medium text-red-600 hover:underline disabled:opacity-50"
-        >
-          {t("common.yes")}
-        </button>
-        <button
-          onClick={() => setConfirming(false)}
-          disabled={pending}
-          className="text-slate-600 hover:underline disabled:opacity-50"
-        >
-          {t("common.no")}
-        </button>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-900 dark:text-rose-200">
+        <div className="flex items-center gap-1.5 font-medium">
+          <AlertCircleIcon className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <span>{t("classes.deleteClassConfirm")}</span>
+        </div>
+        <div className="flex items-center gap-1.5 ml-auto">
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={handleDelete}
+            loading={pending}
+            className="px-2.5 py-1 text-xs"
+          >
+            {t("common.yes")}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setConfirming(false)}
+            disabled={pending}
+            className="px-2.5 py-1 text-xs"
+          >
+            {t("common.no")}
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <button
+    <Button
+      variant="danger"
+      size="sm"
       onClick={() => setConfirming(true)}
-      className="text-sm text-red-600 hover:underline"
+      icon={<TrashIcon className="w-3.5 h-3.5" />}
+      className="text-xs"
     >
       {t("classes.deleteClassButton")}
-    </button>
+    </Button>
   );
 }

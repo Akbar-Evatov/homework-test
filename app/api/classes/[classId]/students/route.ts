@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
-
-function formatStudentCode(id: number) {
-  return `A${id.toString().padStart(3, "0")}`;
-}
+import { generateUniqueStudentCode } from "@/lib/student-code";
 
 export async function POST(
   request: Request,
@@ -27,16 +24,16 @@ export async function POST(
     return NextResponse.json({ error: "Class not found" }, { status: 404 });
   }
 
-  // Use a unique placeholder to avoid colliding with another concurrent
-  // insert before the real, id-derived studentCode is assigned below.
+  // Generate an unguessable, cryptographically random student code (e.g. "K7X9P2")
+  const studentCode = await generateUniqueStudentCode(6);
+
   const student = await prisma.student.create({
-    data: { name, classId, studentCode: `temp-${crypto.randomUUID()}` },
+    data: {
+      name,
+      classId,
+      studentCode,
+    },
   });
 
-  const updated = await prisma.student.update({
-    where: { id: student.id },
-    data: { studentCode: formatStudentCode(student.id) },
-  });
-
-  return NextResponse.json({ student: updated }, { status: 201 });
+  return NextResponse.json({ student }, { status: 201 });
 }

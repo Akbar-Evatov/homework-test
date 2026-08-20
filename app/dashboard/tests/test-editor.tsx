@@ -8,6 +8,17 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import {
+  PlusIcon,
+  TrashIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ImageIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  CheckIcon,
+} from "@/components/ui/Icons";
 
 type ChoiceState = { key: string; text: string; isCorrect: boolean };
 type QuestionState = {
@@ -181,31 +192,101 @@ export default function TestEditor({
         const data = await res.json();
         router.push(`/dashboard/tests/${data.test.id}`);
       }
+    } catch {
+      setError(t("common.error"));
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+    <div className="space-y-6 sm:space-y-8">
+      {/* 1. Test Title Section */}
+      <Card className="p-4 sm:p-6">
+        <label className="block mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
           {t("tests.testTitleLabel")}
         </label>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t("tests.testTitlePlaceholder")}
-          className="w-full max-w-md px-3 py-2"
+          className="w-full max-w-xl text-sm sm:text-base px-3.5 py-2.5 font-medium"
         />
-      </div>
+      </Card>
 
-      <div className="space-y-4">
-        <h2 className="font-medium text-slate-900">{t("tests.questionsTitle")}</h2>
+      {/* 2. Questions List */}
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80">
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-zinc-900 dark:text-zinc-100 text-base sm:text-lg">
+              {t("tests.questionsTitle")}
+            </h2>
+            <Badge variant="indigo">{questions.length}</Badge>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addQuestion}
+            icon={<PlusIcon className="w-3.5 h-3.5" />}
+            className="text-xs"
+          >
+            {t("tests.addQuestionButton")}
+          </Button>
+        </div>
+
         {questions.map((q, qIndex) => (
-          <Card key={q.key} className="p-4">
-            <div className="mb-2 flex items-start gap-2">
-              <span className="mt-2 text-sm text-slate-500">{qIndex + 1}.</span>
+          <Card key={q.key} className="p-4 sm:p-6 space-y-3.5 sm:space-y-4 border-zinc-200/90 dark:border-zinc-800/90">
+            {/* Question Card Header */}
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-600 text-white text-xs font-bold shadow-2xs shrink-0">
+                  {qIndex + 1}
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                  {qIndex + 1}-Savol
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => moveQuestion(qIndex, -1)}
+                  disabled={qIndex === 0}
+                  title={t("tests.moveUp")}
+                  className="p-1 sm:px-2 sm:py-1 h-7 w-7 sm:h-auto sm:w-auto"
+                >
+                  <ArrowUpIcon className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => moveQuestion(qIndex, 1)}
+                  disabled={qIndex === questions.length - 1}
+                  title={t("tests.moveDown")}
+                  className="p-1 sm:px-2 sm:py-1 h-7 w-7 sm:h-auto sm:w-auto"
+                >
+                  <ArrowDownIcon className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => removeQuestion(qIndex)}
+                  disabled={questions.length <= 1}
+                  title={t("tests.removeQuestionButton")}
+                  className="p-1 sm:px-2 sm:py-1 h-7 w-7 sm:h-auto sm:w-auto ml-0.5"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Question Text */}
+            <div>
               <Textarea
                 value={q.text}
                 onChange={(e) =>
@@ -213,66 +294,51 @@ export default function TestEditor({
                 }
                 placeholder={t("tests.questionTextPlaceholder")}
                 rows={2}
-                className="flex-1 px-3 py-2"
+                className="w-full px-3 py-2 text-xs sm:text-sm"
               />
-              <div className="flex flex-col gap-1">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => moveQuestion(qIndex, -1)}
-                  disabled={qIndex === 0}
-                  title={t("tests.moveUp")}
-                  className="px-2 py-1 text-xs"
-                >
-                  ↑
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => moveQuestion(qIndex, 1)}
-                  disabled={qIndex === questions.length - 1}
-                  title={t("tests.moveDown")}
-                  className="px-2 py-1 text-xs"
-                >
-                  ↓
-                </Button>
-              </div>
             </div>
 
-            <div className="ml-6 mb-3 flex items-center gap-3">
+            {/* Image Attachment */}
+            <div className="pt-0.5">
               {q.imageUrl ? (
-                <>
+                <div className="inline-flex flex-col sm:flex-row sm:items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-zinc-50 dark:bg-zinc-850 border border-zinc-200 dark:border-zinc-700 w-full sm:w-auto">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={q.imageUrl}
                     alt=""
-                    className="max-h-32 rounded-lg border border-slate-200 object-contain"
+                    className="max-h-36 max-w-full sm:max-w-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 object-contain shadow-2xs"
                   />
-                  <label className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-                    {t("tests.changeImageButton")}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageSelect(qIndex, file);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    onClick={() => removeImage(qIndex)}
-                    className="text-xs"
-                  >
-                    {t("tests.removeImageButton")}
-                  </Button>
-                </>
+                  <div className="flex sm:flex-col gap-2">
+                    <label className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-pointer shadow-2xs">
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>{t("tests.changeImageButton")}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageSelect(qIndex, file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => removeImage(qIndex)}
+                      icon={<TrashIcon className="w-3 h-3" />}
+                      className="text-xs"
+                    >
+                      {t("tests.removeImageButton")}
+                    </Button>
+                  </div>
+                </div>
               ) : (
-                <label className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-                  {t("tests.addImageButton")}
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all cursor-pointer">
+                  <ImageIcon className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                  <span>{t("tests.addImageButton")}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -287,83 +353,128 @@ export default function TestEditor({
               )}
             </div>
 
-            <div className="ml-6 space-y-2">
-              {q.choices.map((c, cIndex) => (
-                <div key={c.key} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`correct-${q.key}`}
-                    checked={c.isCorrect}
-                    onChange={() => setCorrectChoice(qIndex, cIndex)}
-                    title={t("tests.markCorrectLabel")}
-                    className="accent-indigo-600"
-                  />
-                  <Input
-                    value={c.text}
-                    onChange={(e) =>
-                      updateQuestion(qIndex, (qq) => ({
-                        ...qq,
-                        choices: qq.choices.map((cc, i) =>
-                          i === cIndex ? { ...cc, text: e.target.value } : cc
-                        ),
-                      }))
-                    }
-                    placeholder={t("tests.choicePlaceholder")}
-                    className="flex-1 px-3 py-1.5 text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="danger"
-                    onClick={() => removeChoice(qIndex, cIndex)}
-                    disabled={q.choices.length <= 2}
-                    className="text-xs"
+            {/* Answer Choices */}
+            <div className="space-y-2.5 pt-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {t("tests.choiceLabel")}lar (To&apos;g&apos;ri javobni belgilang):
+              </p>
+              <div className="space-y-2">
+                {q.choices.map((c, cIndex) => (
+                  <div
+                    key={c.key}
+                    className={`flex items-center gap-2 sm:gap-2.5 p-1.5 sm:p-2 rounded-xl border transition-all ${
+                      c.isCorrect
+                        ? "bg-emerald-50/70 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 ring-2 ring-emerald-500/10 dark:ring-emerald-500/20"
+                        : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                    }`}
                   >
-                    {t("common.delete")}
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => addChoice(qIndex)}
-                className="text-sm"
-              >
-                + {t("tests.addChoiceButton")}
-              </Button>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => setCorrectChoice(qIndex, cIndex)}
+                      title={t("tests.markCorrectLabel")}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                        c.isCorrect
+                          ? "bg-emerald-600 text-white shadow-2xs"
+                          : "border-2 border-zinc-300 dark:border-zinc-600 hover:border-emerald-500 bg-white dark:bg-zinc-800"
+                      }`}
+                    >
+                      {c.isCorrect && <CheckIcon className="w-3.5 h-3.5" />}
+                    </button>
 
-            <Button
-              type="button"
-              variant="danger"
-              onClick={() => removeQuestion(qIndex)}
-              className="mt-3 text-sm"
-            >
-              {t("tests.removeQuestionButton")}
-            </Button>
+                    <Input
+                      value={c.text}
+                      onChange={(e) =>
+                        updateQuestion(qIndex, (qq) => ({
+                          ...qq,
+                          choices: qq.choices.map((cc, i) =>
+                            i === cIndex ? { ...cc, text: e.target.value } : cc
+                          ),
+                        }))
+                      }
+                      placeholder={`${String.fromCharCode(65 + cIndex)}) ${t("tests.choicePlaceholder")}`}
+                      className="flex-1 min-w-0 px-2.5 py-1.5 text-xs sm:text-sm border-0 focus:ring-0 shadow-none bg-transparent"
+                    />
+
+                    {c.isCorrect && (
+                      <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
+                        {t("tests.markCorrectLabel")}
+                      </span>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeChoice(qIndex, cIndex)}
+                      disabled={q.choices.length <= 2}
+                      className="text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 p-1 sm:px-2 shrink-0"
+                      title={t("common.delete")}
+                    >
+                      <TrashIcon className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => addChoice(qIndex)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition-colors cursor-pointer"
+              >
+                <PlusIcon className="w-3.5 h-3.5" />
+                <span>{t("tests.addChoiceButton")}</span>
+              </button>
+            </div>
           </Card>
         ))}
 
+        {/* Big Add Question Button */}
         <button
           type="button"
           onClick={addQuestion}
-          className="rounded-lg border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-600 hover:border-indigo-400 hover:text-indigo-600"
+          className="w-full py-3.5 sm:py-4 rounded-2xl border-2 border-dashed border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/30 dark:bg-indigo-950/30 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/60 hover:border-indigo-400 text-indigo-700 dark:text-indigo-300 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer group shadow-2xs"
         >
-          + {t("tests.addQuestionButton")}
+          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+            <PlusIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          </div>
+          <span>{t("tests.addQuestionButton")}</span>
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {message && <p className="text-sm text-emerald-600">{message}</p>}
+      {/* 3. Feedback and Save Action Bar */}
+      <div className="sticky bottom-3 sm:bottom-6 z-40 p-3.5 sm:p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+        <div>
+          {error && (
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-rose-700 dark:text-rose-400 font-medium">
+              <AlertCircleIcon className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          {message && (
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-emerald-700 dark:text-emerald-400 font-medium">
+              <CheckCircleIcon className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <span>{message}</span>
+            </div>
+          )}
+          {!error && !message && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Jami {questions.length} ta savol tayyorlandi
+            </p>
+          )}
+        </div>
 
-      <Button
-        type="button"
-        variant="primary"
-        onClick={handleSave}
-        disabled={pending}
-        className="px-5 py-2"
-      >
-        {t("tests.saveTestButton")}
-      </Button>
+        <Button
+          type="button"
+          variant="primary"
+          size="lg"
+          onClick={handleSave}
+          loading={pending}
+          icon={<CheckIcon className="w-4 h-4" />}
+          className="w-full sm:w-auto px-8 font-bold"
+        >
+          {t("tests.saveTestButton")}
+        </Button>
+      </div>
     </div>
   );
 }

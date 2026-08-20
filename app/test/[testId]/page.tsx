@@ -7,7 +7,7 @@ export default async function StudentTestPage({
 }) {
   const { testId } = await params;
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-10">
       <StudentFlow testId={testId} />
     </div>
   );

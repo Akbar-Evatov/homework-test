@@ -28,7 +28,8 @@ export default function LoginPage() {
       });
 
       if (!res.ok) {
-        setError(t("login.invalidPassword"));
+        const data = await res.json().catch(() => null);
+        setError(data?.error || t("login.invalidPassword"));
         return;
       }
 

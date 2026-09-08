@@ -1,11 +1,24 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const SESSION_COOKIE = "teacher_session";
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
-function getSecretKey() {
-  const secret = process.env.SESSION_SECRET;
+export async function getEnvVar(key: string): Promise<string | undefined> {
+  if (process.env[key]) {
+    return process.env[key];
+  }
+  try {
+    const ctx = await getCloudflareContext({ async: true });
+    return (ctx?.env as any)?.[key];
+  } catch {
+    return undefined;
+  }
+}
+
+async function getSecretKey() {
+  const secret = await getEnvVar("SESSION_SECRET");
   if (!secret) {
     throw new Error("SESSION_SECRET environment variable is not set");
   }
@@ -14,11 +27,12 @@ function getSecretKey() {
 
 export async function createSession() {
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  const secretKey = await getSecretKey();
   const token = await new SignJWT({ role: "teacher" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(Math.floor(expiresAt.getTime() / 1000))
-    .sign(getSecretKey());
+    .sign(secretKey);
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
@@ -41,7 +55,8 @@ export async function verifySession(): Promise<boolean> {
   if (!token) return false;
 
   try {
-    const { payload } = await jwtVerify(token, getSecretKey(), {
+    const secretKey = await getSecretKey();
+    const { payload } = await jwtVerify(token, secretKey, {
       algorithms: ["HS256"],
     });
     return payload.role === "teacher";
@@ -50,8 +65,8 @@ export async function verifySession(): Promise<boolean> {
   }
 }
 
-export function checkTeacherPassword(password: string): boolean {
-  const expected = process.env.TEACHER_PASSWORD;
+export async function checkTeacherPassword(password: string): Promise<boolean> {
+  const expected = await getEnvVar("TEACHER_PASSWORD");
   if (!expected) {
     throw new Error("TEACHER_PASSWORD environment variable is not set");
   }

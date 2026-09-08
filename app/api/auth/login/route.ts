@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     const password = body?.password;
 
-    if (typeof password !== "string" || !checkTeacherPassword(password)) {
+    if (typeof password !== "string" || !(await checkTeacherPassword(password))) {
       return NextResponse.json(
         { error: "Noto'g'ri parol" },
         { status: 401 }

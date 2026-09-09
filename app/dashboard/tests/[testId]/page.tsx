@@ -7,6 +7,7 @@ import Badge from "@/components/ui/Badge";
 import TestEditor from "../test-editor";
 import AssignClasses from "./assign-classes";
 import ShareLink from "./share-link";
+import DeleteTestButton from "./delete-test-button";
 import {
   ArrowLeftIcon,
   TestIcon,
@@ -70,13 +71,16 @@ export default async function EditTestPage({
           </div>
         </div>
 
-        <Link
-          href={`/dashboard/tests/${test.id}/results`}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 hover:bg-violet-100/80 dark:hover:bg-violet-900/60 border border-violet-200/80 dark:border-violet-800/60 transition-all shadow-2xs w-full sm:w-auto"
-        >
-          <ChartIcon className="w-4 h-4" />
-          <span>{t("dashboard.viewResults")} ({test._count.attempts})</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto w-full sm:w-auto">
+          <Link
+            href={`/dashboard/tests/${test.id}/results`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 hover:bg-violet-100/80 dark:hover:bg-violet-900/60 border border-violet-200/80 dark:border-violet-800/60 transition-all shadow-2xs flex-1 sm:flex-initial"
+          >
+            <ChartIcon className="w-4 h-4" />
+            <span>{t("dashboard.viewResults")} ({test._count.attempts})</span>
+          </Link>
+          <DeleteTestButton testId={test.id} />
+        </div>
       </div>
 
       {/* 2. Main Test Editor */}

@@ -94,6 +94,8 @@ const uz = {
     removeImageButton: "Rasmni olib tashlash",
     imageInvalidType: "Faqat rasm fayli yuklash mumkin",
     imageTooLarge: "Rasm hajmi juda katta, kichikroq rasm tanlang",
+    deleteTestButton: "Testni o'chirish",
+    deleteTestConfirm: "Ushbu testni va uning barcha natijalarini o'chirishni tasdiqlaysizmi?",
   },
   results: {
     title: "Natijalar",

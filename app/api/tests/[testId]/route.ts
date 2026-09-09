@@ -81,8 +81,15 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { testId } = await params;
-  await prisma.test.delete({ where: { id: testId } });
-
-  return NextResponse.json({ ok: true });
+  try {
+    const { testId } = await params;
+    await prisma.test.delete({ where: { id: testId } });
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error("API /api/tests/[testId] DELETE error:", error);
+    return NextResponse.json(
+      { error: error?.message || "Failed to delete test" },
+      { status: 500 }
+    );
+  }
 }

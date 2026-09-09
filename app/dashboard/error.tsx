@@ -26,7 +26,9 @@ export default function DashboardError({
           Ma&apos;lumotlarni yuklashda xatolik yuz berdi
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          {error.message || "Ma'lumotlar bazasiga ulanishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring."}
+          {error.message && !error.message.includes("441") && !error.message.includes("Minified")
+            ? error.message
+            : "Ma'lumotlar bazasiga ulanishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring yoki sozlamalarni tekshiring."}
         </p>
         {error.digest && (
           <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">

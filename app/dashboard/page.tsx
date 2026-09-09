@@ -19,27 +19,45 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [classes, tests] = await Promise.all([
-    prisma.class.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { _count: { select: { students: true, assignments: true } } },
-    }),
-    prisma.test.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: { select: { assignments: true, attempts: true, questions: true } },
-      },
-    }),
-  ]);
+  let classes: any[] = [];
+  let tests: any[] = [];
+  let dbError: string | null = null;
 
-  const totalStudents = classes.reduce((sum, c) => sum + c._count.students, 0);
-  const totalAttempts = tests.reduce((sum, item) => sum + item._count.attempts, 0);
+  try {
+    const results = await Promise.all([
+      prisma.class.findMany({
+        orderBy: { createdAt: "desc" },
+        include: { _count: { select: { students: true, assignments: true } } },
+      }),
+      prisma.test.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: { select: { assignments: true, attempts: true, questions: true } },
+        },
+      }),
+    ]);
+    classes = results[0];
+    tests = results[1];
+  } catch (err: any) {
+    console.error("Dashboard database query failed:", err);
+    dbError = err?.message || String(err);
+  }
+
+  const totalStudents = classes.reduce((sum, c) => sum + (c._count?.students || 0), 0);
+  const totalAttempts = tests.reduce((sum, item) => sum + (item._count?.attempts || 0), 0);
 
   const recentClasses = classes.slice(0, 6);
   const recentTests = tests.slice(0, 6);
 
   return (
     <div className="space-y-8 sm:space-y-10">
+      {dbError && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-sm">
+          <p className="font-semibold">Ma&apos;lumotlar bazasiga ulanishda xatolik yuz berdi:</p>
+          <p className="text-xs opacity-90 mt-1 font-mono">{dbError}</p>
+        </div>
+      )}
+
       {/* 1. Overview Metrics */}
       <section className="space-y-3 sm:space-y-4">
         <div>

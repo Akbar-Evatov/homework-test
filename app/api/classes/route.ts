@@ -7,22 +7,33 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const classes = await prisma.class.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: { select: { students: true, assignments: true } },
-    },
-  });
+  try {
+    const classes = await prisma.class.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { students: true, assignments: true } },
+      },
+    });
 
-  return NextResponse.json({
-    classes: classes.map((c) => ({
-      id: c.id,
-      name: c.name,
-      createdAt: c.createdAt,
-      studentCount: c._count.students,
-      testsAssignedCount: c._count.assignments,
-    })),
-  });
+    return NextResponse.json({
+      classes: classes.map((c) => ({
+        id: c.id,
+        name: c.name,
+        createdAt: c.createdAt,
+        studentCount: c._count.students,
+        testsAssignedCount: c._count.assignments,
+      })),
+    });
+  } catch (error: any) {
+    console.error("API /api/classes error:", error);
+    return NextResponse.json(
+      {
+        error: error?.message || String(error),
+        databaseUrlFound: Boolean(process.env.DATABASE_URL),
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {

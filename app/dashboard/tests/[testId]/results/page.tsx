@@ -5,6 +5,7 @@ import { t } from "@/lib/i18n";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import StatsCard from "@/components/ui/StatsCard";
+import DownloadTestExcelButton from "./download-test-excel-button";
 import {
   ArrowLeftIcon,
   TrophyIcon,
@@ -96,13 +97,26 @@ export default async function TestResultsPage({
           </div>
         </div>
 
-        <Link
-          href={`/dashboard/tests/${test.id}`}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-all shadow-2xs w-full sm:w-auto"
-        >
-          <EditIcon className="w-4 h-4 text-zinc-500" />
-          <span>{t("dashboard.viewTest")}</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto w-full sm:w-auto">
+          <DownloadTestExcelButton
+            testTitle={test.title}
+            attempts={attempts.map((a) => ({
+              id: a.id,
+              studentCode: a.student.studentCode,
+              studentName: a.student.name,
+              score: a.score,
+              totalQuestions: a.totalQuestions,
+              submittedAt: a.submittedAt,
+            }))}
+          />
+          <Link
+            href={`/dashboard/tests/${test.id}`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-all shadow-2xs w-full sm:w-auto"
+          >
+            <EditIcon className="w-4 h-4 text-zinc-500" />
+            <span>{t("dashboard.viewTest")}</span>
+          </Link>
+        </div>
       </div>
 
       {/* 2. Results Stat Cards */}
@@ -132,7 +146,7 @@ export default async function TestResultsPage({
 
       {/* 3. Submissions Table */}
       <section className="space-y-3 sm:space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <TrophyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 dark:text-zinc-400" />
             <h2 className="font-bold text-zinc-900 dark:text-zinc-100 text-base sm:text-lg">
@@ -140,6 +154,17 @@ export default async function TestResultsPage({
             </h2>
             <Badge variant="indigo">{attempts.length}</Badge>
           </div>
+          <DownloadTestExcelButton
+            testTitle={test.title}
+            attempts={attempts.map((a) => ({
+              id: a.id,
+              studentCode: a.student.studentCode,
+              studentName: a.student.name,
+              score: a.score,
+              totalQuestions: a.totalQuestions,
+              submittedAt: a.submittedAt,
+            }))}
+          />
         </div>
 
         {attempts.length === 0 ? (

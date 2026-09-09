@@ -52,6 +52,7 @@ export async function PATCH(
       where: { id: testId },
       data: {
         title: input.title,
+        timeLimitMinutes: input.timeLimitMinutes,
         questions: {
           create: input.questions.map((q, qIndex) => ({
             text: q.text,

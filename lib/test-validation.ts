@@ -2,7 +2,11 @@ export const MAX_IMAGE_DATA_URL_LENGTH = 2_000_000; // ~1.5MB of binary image da
 
 export type ChoiceInput = { text: string; isCorrect: boolean };
 export type QuestionInput = { text: string; imageUrl: string | null; choices: ChoiceInput[] };
-export type TestInput = { title: string; questions: QuestionInput[] };
+export type TestInput = {
+  title: string;
+  timeLimitMinutes?: number | null;
+  questions: QuestionInput[];
+};
 
 function validateImageUrl(value: unknown): { ok: true; imageUrl: string | null } | { ok: false } {
   if (value === undefined || value === null) return { ok: true, imageUrl: null };
@@ -18,6 +22,21 @@ export function validateTestInput(body: unknown): TestInput | null {
 
   const title = typeof b.title === "string" ? b.title.trim() : "";
   if (!title) return null;
+
+  let timeLimitMinutes: number | null = null;
+  if (typeof b.timeLimitMinutes === "number") {
+    if (Number.isInteger(b.timeLimitMinutes) && b.timeLimitMinutes >= 1 && b.timeLimitMinutes <= 1440) {
+      timeLimitMinutes = b.timeLimitMinutes;
+    } else if (b.timeLimitMinutes <= 0) {
+      timeLimitMinutes = null;
+    } else {
+      return null;
+    }
+  } else if (b.timeLimitMinutes === null || b.timeLimitMinutes === undefined) {
+    timeLimitMinutes = null;
+  } else {
+    return null;
+  }
 
   if (!Array.isArray(b.questions) || b.questions.length === 0) return null;
 
@@ -48,5 +67,5 @@ export function validateTestInput(body: unknown): TestInput | null {
     questions.push({ text, imageUrl: imageResult.imageUrl, choices });
   }
 
-  return { title, questions };
+  return { title, timeLimitMinutes, questions };
 }

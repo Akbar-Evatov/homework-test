@@ -96,6 +96,15 @@ const uz = {
     imageTooLarge: "Rasm hajmi juda katta, kichikroq rasm tanlang",
     deleteTestButton: "Testni o'chirish",
     deleteTestConfirm: "Ushbu testni va uning barcha natijalarini o'chirishni tasdiqlaysizmi?",
+    timerTitle: "Vaqt chegarasi (Taymer)",
+    timerSubtitle: "O'quvchilar uchun test topshirish vaqtini belgilash (ixtiyoriy)",
+    noTimerOption: "Vaqt chegarasisiz (Cheklovsiz)",
+    setTimerOption: "Vaqt belgilash",
+    timerMinutesLabel: "Daqiqa",
+    timerExplanation: "O'quvchi testni boshlagan zahoti taymer ishga tushadi. Vaqt tugagach test avtomatik ravishda yakunlanadi va belgilanmagan savollarga 0 ball beriladi.",
+    timeUnlimited: "Cheklovsiz",
+    timeMinutes: "daqiqa",
+    timeShort: "daq",
   },
   results: {
     title: "Natijalar",
@@ -106,6 +115,8 @@ const uz = {
     noAttempts: "Hozircha hech kim testni topshirmagan",
     breakdownTitle: "Savollar bo'yicha tahlil",
     percentCorrect: "to'g'ri javob berdi",
+    downloadExcel: "Excel yuklab olish",
+    downloadExcelDesc: "Natijalarni Excel (.xlsx) formatida yuklab olish",
   },
   student: {
     enterIdTitle: "Testni boshlash uchun ID raqamingizni kiriting",
@@ -126,6 +137,9 @@ const uz = {
     welcomeName: "Xush kelibsiz",
     unansweredWarning: "Barcha savollarga javob bering",
     confirmSubmit: "Testni yakunlashni tasdiqlaysizmi? Buni orqaga qaytarib bo'lmaydi.",
+    timeRemaining: "Qolgan vaqt",
+    timeUp: "Vaqt tugadi!",
+    timeUpSubmitting: "Vaqt tugadi! Javoblaringiz avtomatik topshirilmoqda...",
   },
 } as const;
 

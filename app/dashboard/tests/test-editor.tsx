@@ -18,6 +18,7 @@ import {
   CheckCircleIcon,
   AlertCircleIcon,
   CheckIcon,
+  ClockIcon,
 } from "@/components/ui/Icons";
 
 type ChoiceState = { key: string; text: string; isCorrect: boolean };
@@ -43,6 +44,7 @@ function newQuestion(): QuestionState {
 
 export type InitialTest = {
   title: string;
+  timeLimitMinutes?: number | null;
   questions: {
     text: string;
     imageUrl: string | null;
@@ -72,6 +74,14 @@ export default function TestEditor({
           })),
         }))
       : [newQuestion()]
+  );
+  const [hasTimer, setHasTimer] = useState<boolean>(
+    Boolean(initialTest?.timeLimitMinutes && initialTest.timeLimitMinutes > 0)
+  );
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState<number>(
+    initialTest?.timeLimitMinutes && initialTest.timeLimitMinutes > 0
+      ? initialTest.timeLimitMinutes
+      : 30
   );
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -147,6 +157,9 @@ export default function TestEditor({
         return t("tests.validationNeedCorrect");
       }
     }
+    if (hasTimer && (!timeLimitMinutes || timeLimitMinutes < 1 || timeLimitMinutes > 1440)) {
+      return "Test vaqti 1 dan 1440 daqiqagacha bo'lishi kerak";
+    }
     return null;
   }
 
@@ -163,6 +176,7 @@ export default function TestEditor({
 
     const payload = {
       title: title.trim(),
+      timeLimitMinutes: hasTimer ? timeLimitMinutes : null,
       questions: questions.map((q) => ({
         text: q.text.trim(),
         imageUrl: q.imageUrl,
@@ -440,6 +454,124 @@ export default function TestEditor({
           <span>{t("tests.addQuestionButton")}</span>
         </button>
       </div>
+
+      {/* 3. Timer Configuration Section */}
+      <Card className="p-4 sm:p-6 space-y-4 border-zinc-200/90 dark:border-zinc-800/90">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border border-violet-200/80 dark:border-violet-800/60">
+            <ClockIcon className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm sm:text-base">
+              {t("tests.timerTitle")}
+            </h2>
+            <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+              {t("tests.timerSubtitle")}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setHasTimer(false)}
+            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
+              !hasTimer
+                ? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/50 ring-2 ring-indigo-500/20"
+                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900"
+            }`}
+          >
+            <div
+              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                !hasTimer ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-300 dark:border-zinc-600"
+              }`}
+            >
+              {!hasTimer && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {t("tests.noTimerOption")}
+              </p>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                O&apos;quvchilar vaqt cheklovisiz javob berishadi
+              </p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setHasTimer(true)}
+            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
+              hasTimer
+                ? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/50 ring-2 ring-indigo-500/20"
+                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900"
+            }`}
+          >
+            <div
+              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                hasTimer ? "border-indigo-600 bg-indigo-600 text-white" : "border-zinc-300 dark:border-zinc-600"
+              }`}
+            >
+              {hasTimer && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {t("tests.setTimerOption")}
+              </p>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                Har bir o&apos;quvchi uchun alohida teskari vaqt
+              </p>
+            </div>
+          </button>
+        </div>
+
+        {hasTimer && (
+          <div className="pt-2 p-3.5 sm:p-4 rounded-xl bg-zinc-50 dark:bg-zinc-850/60 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mr-1">
+                Tezkor tanlov:
+              </span>
+              {[10, 15, 20, 30, 45, 60].map((mins) => (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => setTimeLimitMinutes(mins)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    timeLimitMinutes === mins
+                      ? "bg-indigo-600 text-white shadow-2xs"
+                      : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-indigo-300"
+                  }`}
+                >
+                  {mins} {t("tests.timeMinutes")}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Maxsus vaqt:
+              </label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={1440}
+                  value={timeLimitMinutes || ""}
+                  onChange={(e) => setTimeLimitMinutes(Math.max(1, parseInt(e.target.value) || 0))}
+                  className="w-24 text-center font-mono font-bold text-sm px-2 py-1.5"
+                />
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  {t("tests.timeMinutes")}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 bg-amber-50/70 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-300">
+              💡 {t("tests.timerExplanation")}
+            </p>
+          </div>
+        )}
+      </Card>
 
       {/* 3. Feedback and Save Action Bar */}
       <div className="sticky bottom-3 sm:bottom-6 z-40 p-3.5 sm:p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">

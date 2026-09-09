@@ -28,6 +28,7 @@ model Student {
   class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   attempts Attempt[]
+  sessions TestSession[]
 
   @@index([classId])
 }
@@ -35,12 +36,14 @@ model Student {
 model Test {
   id                   String   @id @default(cuid())
   title                String
+  timeLimitMinutes     Int?
   showScoreImmediately Boolean  @default(true)
   createdAt            DateTime @default(now())
 
   questions   Question[]
   assignments TestAssignment[]
   attempts    Attempt[]
+  sessions    TestSession[]
 }
 
 model Question {
@@ -93,4 +96,17 @@ model Attempt {
   test      Test    @relation(fields: [testId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, testId])
+}
+
+model TestSession {
+  id        String   @id @default(cuid())
+  studentId Int
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  testId    String
+  test      Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  startedAt DateTime @default(now())
+
+  @@unique([studentId, testId])
+  @@index([studentId])
+  @@index([testId])
 }

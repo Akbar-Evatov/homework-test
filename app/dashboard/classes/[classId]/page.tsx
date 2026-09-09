@@ -7,6 +7,7 @@ import Badge from "@/components/ui/Badge";
 import StatsCard from "@/components/ui/StatsCard";
 import AddStudentForm from "./add-student-form";
 import DeleteClassButton from "./delete-class-button";
+import DownloadClassExcelButton from "./download-excel-button";
 import {
   ArrowLeftIcon,
   UsersIcon,
@@ -28,7 +29,17 @@ export default async function ClassDetailPage({
     where: { id: classId },
     include: {
       students: { orderBy: { id: "asc" } },
-      assignments: { select: { testId: true } },
+      assignments: {
+        include: {
+          test: {
+            select: {
+              id: true,
+              title: true,
+              _count: { select: { questions: true } },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -37,17 +48,26 @@ export default async function ClassDetailPage({
   const totalAssignedTests = cls.assignments.length;
   const studentIds = cls.students.map((s) => s.id);
 
+  const assignedTests = cls.assignments.map((a) => ({
+    id: a.test.id,
+    title: a.test.title,
+    totalQuestions: a.test._count.questions,
+  }));
+
   const attempts = studentIds.length
     ? await prisma.attempt.findMany({
         where: { studentId: { in: studentIds } },
-        select: { studentId: true, score: true, totalQuestions: true },
+        select: { studentId: true, testId: true, score: true, totalQuestions: true },
       })
     : [];
 
-  const attemptsByStudent = new Map<number, { score: number; totalQuestions: number }[]>();
+  const attemptsByStudent = new Map<
+    number,
+    { testId: string; score: number; totalQuestions: number }[]
+  >();
   for (const a of attempts) {
     const list = attemptsByStudent.get(a.studentId) ?? [];
-    list.push({ score: a.score, totalQuestions: a.totalQuestions });
+    list.push({ testId: a.testId, score: a.score, totalQuestions: a.totalQuestions });
     attemptsByStudent.set(a.studentId, list);
   }
 
@@ -66,7 +86,12 @@ export default async function ClassDetailPage({
               100
           )
         : null;
-    return { ...s, testsTaken, testsPending, averageScore };
+    const testScores: Record<string, { score: number; totalQuestions: number }> = {};
+    for (const a of studentAttempts) {
+      testScores[a.testId] = { score: a.score, totalQuestions: a.totalQuestions };
+    }
+
+    return { ...s, testsTaken, testsPending, averageScore, testScores };
   });
 
   const studentsWithScores = students.filter((s) => s.averageScore !== null);
@@ -105,7 +130,12 @@ export default async function ClassDetailPage({
           </div>
         </div>
 
-        <div className="self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <DownloadClassExcelButton
+            className={cls.name}
+            students={students}
+            assignedTests={assignedTests}
+          />
           <DeleteClassButton classId={cls.id} />
         </div>
       </div>
@@ -150,7 +180,7 @@ export default async function ClassDetailPage({
 
       {/* 4. Roster Table */}
       <section className="space-y-3 sm:space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500 dark:text-indigo-400" />
             <h2 className="font-bold text-zinc-900 dark:text-zinc-100 text-base sm:text-lg">
@@ -158,6 +188,11 @@ export default async function ClassDetailPage({
             </h2>
             <Badge variant="indigo">{students.length}</Badge>
           </div>
+          <DownloadClassExcelButton
+            className={cls.name}
+            students={students}
+            assignedTests={assignedTests}
+          />
         </div>
 
         {students.length === 0 ? (

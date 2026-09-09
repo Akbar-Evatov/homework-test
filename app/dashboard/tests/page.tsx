@@ -11,6 +11,7 @@ import {
   EditIcon,
   ChartIcon,
   ArrowLeftIcon,
+  ClockIcon,
 } from "@/components/ui/Icons";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +98,16 @@ export default async function TestsPage() {
                       <Badge variant="emerald" icon={<TrophyIcon className="w-3 h-3" />}>
                         {test._count.attempts} {t("results.title").toLowerCase()}
                       </Badge>
+                      {(() => {
+                        const timeLimit = (test as { timeLimitMinutes?: number | null }).timeLimitMinutes;
+                        return timeLimit ? (
+                          <Badge variant="amber" icon={<ClockIcon className="w-3 h-3" />}>
+                            {timeLimit} {t("tests.timeShort")}
+                          </Badge>
+                        ) : (
+                          <Badge variant="slate">{t("tests.timeUnlimited")}</Badge>
+                        );
+                      })()}
                     </div>
                   </div>
 

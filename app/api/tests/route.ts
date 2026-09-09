@@ -30,6 +30,7 @@ export async function POST(request: Request) {
   const created = await prisma.test.create({
     data: {
       title: input.title,
+      timeLimitMinutes: input.timeLimitMinutes,
       questions: {
         create: input.questions.map((q, qIndex) => ({
           text: q.text,

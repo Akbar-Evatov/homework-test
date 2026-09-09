@@ -13,6 +13,7 @@ import {
   TestIcon,
   SchoolIcon,
   ChartIcon,
+  ClockIcon,
 } from "@/components/ui/Icons";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ export default async function EditTestPage({
 
   if (!test) notFound();
 
+  const timeLimitMinutes = (test as { timeLimitMinutes?: number | null }).timeLimitMinutes ?? null;
+
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* 1. Header with Breadcrumbs and Quick Links */}
@@ -58,11 +61,18 @@ export default async function EditTestPage({
               <TestIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                   {test.title}
                 </h1>
                 <Badge variant="violet">{test.questions.length} savol</Badge>
+                {timeLimitMinutes ? (
+                  <Badge variant="amber" icon={<ClockIcon className="w-3 h-3" />}>
+                    {timeLimitMinutes} {t("tests.timeMinutes")}
+                  </Badge>
+                ) : (
+                  <Badge variant="slate">{t("tests.timeUnlimited")}</Badge>
+                )}
               </div>
               <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                 {t("tests.editTestTitle")} — savollar va sozlamalar
@@ -88,6 +98,7 @@ export default async function EditTestPage({
         testId={test.id}
         initialTest={{
           title: test.title,
+          timeLimitMinutes,
           questions: test.questions.map((q) => ({
             text: q.text,
             imageUrl: q.imageUrl,

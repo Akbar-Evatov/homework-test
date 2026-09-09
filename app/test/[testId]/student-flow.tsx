@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { t } from "@/lib/i18n";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -20,7 +20,14 @@ import {
 
 type Choice = { id: string; text: string };
 type Question = { id: string; text: string; imageUrl: string | null; choices: Choice[] };
-type TestData = { id: string; title: string; questions: Question[] };
+type TestData = {
+  id: string;
+  title: string;
+  timeLimitMinutes?: number | null;
+  remainingSeconds?: number | null;
+  startedAt?: string | null;
+  questions: Question[];
+};
 
 type Phase =
   | { name: "id-entry" }
@@ -39,6 +46,15 @@ export default function StudentFlow({ testId }: { testId: string }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showUnansweredWarning, setShowUnansweredWarning] = useState(false);
   const [confirmingSubmit, setConfirmingSubmit] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [isTimeUp, setIsTimeUp] = useState(false);
+
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  const autoSubmittedRef = useRef(false);
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
@@ -63,6 +79,13 @@ export default function StudentFlow({ testId }: { testId: string }) {
       } else if (data.status === "ok") {
         setPhase({ name: "taking-test", test: data.test, studentId, studentName: data.studentName });
         setAnswers({});
+        if (typeof data.test.remainingSeconds === "number") {
+          setTimeLeft(data.test.remainingSeconds);
+        } else {
+          setTimeLeft(null);
+        }
+        setIsTimeUp(false);
+        autoSubmittedRef.current = false;
       } else {
         setPhase({ name: "not-found" });
       }
@@ -104,6 +127,57 @@ export default function StudentFlow({ testId }: { testId: string }) {
     } finally {
       setPending(false);
     }
+  }
+
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (phase.name !== "taking-test" || timeLeft === null) return;
+
+    if (timeLeft <= 0) {
+      if (!autoSubmittedRef.current) {
+        autoSubmittedRef.current = true;
+        setIsTimeUp(true);
+        // Automatically submit with latest answers (unanswered questions receive 0)
+        setPending(true);
+        fetch("/api/student/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId: phase.studentId,
+            testId,
+            answers: answersRef.current,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.status === "pending_release") {
+              setPhase({ name: "submitted-pending" });
+            } else {
+              setPhase({ name: "submitted", score: data.score, totalQuestions: data.totalQuestions });
+            }
+          })
+          .finally(() => {
+            setPending(false);
+          });
+      }
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phase, timeLeft, testId]);
+
+  function formatTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) {
+      return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    }
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   }
 
   // Phase 1: Student ID Entry
@@ -278,6 +352,21 @@ export default function StudentFlow({ testId }: { testId: string }) {
             </p>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {timeLeft !== null && (
+              <div
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl font-mono font-bold text-xs sm:text-sm border transition-all ${
+                  timeLeft <= 60
+                    ? "bg-rose-500 text-white border-rose-600 animate-pulse shadow-md shadow-rose-500/20"
+                    : timeLeft <= 300
+                    ? "bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border-amber-300 dark:border-amber-800"
+                    : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60"
+                }`}
+                title={t("student.timeRemaining")}
+              >
+                <ClockIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>{formatTime(timeLeft)}</span>
+              </div>
+            )}
             <Badge variant="indigo" className="font-semibold text-[11px] sm:text-xs font-mono">
               {answeredCount}/{test.questions.length}
             </Badge>
@@ -293,6 +382,14 @@ export default function StudentFlow({ testId }: { testId: string }) {
           />
         </div>
       </div>
+
+      {/* Time is Up Alert Banner */}
+      {isTimeUp && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2.5 shadow-lg animate-pulse">
+          <ClockIcon className="w-5 h-5 shrink-0" />
+          <span>{t("student.timeUpSubmitting")}</span>
+        </div>
+      )}
 
       {/* Questions List */}
       <div className="space-y-4 sm:space-y-5">
